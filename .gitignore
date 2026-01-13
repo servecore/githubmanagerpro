@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# IDE
+.vscode/
+.idea/
+
+# Application Specific (DATA & SECURITY)
+# ------------------------------------
+# Ignore generated SSH keys
+ssh_keys/
+
+# Ignore application logs
+logs/
+
+# Ignore local database of accounts
+src/accounts.json
+src/repositories.json
+
+# Ignore avatar cache
+avatars/
+
+# Ignore backup files
+*.bak
