@@ -2,7 +2,7 @@
 
 A powerful, modern desktop application for Windows to manage multiple GitHub accounts seamlessly. Switch between personal, work, and freelance identities with a single click, ensuring your commits are always attributed to the right user.
 
-<img src="denastech.png" alt="App Icon" width="120">
+![App Icon](denastech.png)
 
 ## ✨ Key Features
 
