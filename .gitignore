@@ -8,6 +8,11 @@ env/
 venv/
 .venv/
 pip-log.txt
+
+# PyInstaller / Build
+build/
+dist/
+*.spec
 pip-delete-this-directory.txt
 
 # IDE
