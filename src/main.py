@@ -1,5 +1,6 @@
 import customtkinter as ctk
 import tkinter as tk
+import sys
 from tkinter import messagebox, filedialog
 import os
 import logging
@@ -15,9 +16,20 @@ from avatar_manager import AvatarManager
 from repository_manager import RepositoryManager
 from gpg_manager import GPGManager
 
+# Determine Base Path (Frozen vs Source)
+if getattr(sys, 'frozen', False):
+    # Running as compiled exe
+    # Mutable data (logs, config) goes relative to the EXE
+    BASE_DIR = os.path.dirname(sys.executable)
+    # Assets (images) go in the temp folder provided by PyInstaller
+    ASSETS_DIR = sys._MEIPASS
+else:
+    # Running from source
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    ASSETS_DIR = BASE_DIR
+
 # Setup Logging
-log_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "logs")
-log_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "logs")
+log_dir = os.path.join(BASE_DIR, "logs")
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
     
@@ -40,20 +52,28 @@ class App(ctk.CTk):
         self.title("GitHub Account Manager Pro")
         self.geometry("900x650")
         
-        # Managers
-        self.account_manager = AccountManager()
-        self.git_switcher = GitSwitcher()
+        # Local Keys Directory & Data - Use BASE_DIR for persistence
+        self.local_keys_dir = os.path.join(BASE_DIR, "ssh_keys")
+        self.avatars_dir = os.path.join(BASE_DIR, "avatars")
         
-        # Local Keys Directory
-        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        self.local_keys_dir = os.path.join(project_root, "ssh_keys")
-        self.avatars_dir = os.path.join(project_root, "avatars")
-        self.icon_path = os.path.join(project_root, "denastech.png")
+        # Config Files - Explicitly pass persistent paths
+        self.accounts_file = os.path.join(BASE_DIR, "data", "accounts.json") 
+        self.repos_file = os.path.join(BASE_DIR, "data", "repositories.json")
         
-        # Managers
+        # Ensure data dir exists
+        data_dir = os.path.join(BASE_DIR, "data")
+        if not os.path.exists(data_dir):
+             os.makedirs(data_dir)
+             
+        # Icon - Use ASSETS_DIR (bundled)
+        self.icon_path = os.path.join(ASSETS_DIR, "denastech.png")
+        
+        # Managers - Pass persistent paths
+        self.account_manager = AccountManager(storage_file=self.accounts_file)
         self.avatar_manager = AvatarManager(self.avatars_dir)
-        self.repo_manager = RepositoryManager()
+        self.repo_manager = RepositoryManager(storage_file=self.repos_file)
         self.gpg_manager = GPGManager()
+        self.git_switcher = GitSwitcher()
 
         # System Tray State
         self.tray_icon = None
@@ -693,13 +713,12 @@ class AddAccountDialog(ctk.CTkToplevel):
 if __name__ == "__main__":
     try:
         app = App()
-        # Hook the exception handler to the underlying tk instance
-        app.report_callback_exception = app.report_callback_exception
         app.mainloop()
+    except KeyboardInterrupt:
+        # User pressed Ctrl+C - graceful exit
+        print("\n✅ Application closed by user (Ctrl+C)")
+        logging.info("Application closed via KeyboardInterrupt")
     except Exception as e:
-        # Catch errors occurring before mainloop
-        error_msg = "".join(traceback.format_exc())
-        logging.critical(f"Critical Startup Error:\n{error_msg}")
         # Try to show a message box if tk is initialized, otherwise print
         try:
              messagebox.showerror("Critical Error", f"Failed to start application:\n{str(e)}")
